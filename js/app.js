@@ -205,7 +205,8 @@ function confirmDeleteCard(categoryId, card) {
 }
 
 // ---------- Barra de frase (Conversar) ----------
-// Cada toque numa palavra soma ela na frase. Só fala quando toca em "Falar".
+// Cada toque numa palavra fala ela na hora e soma na frase.
+// Tocar em "Falar" lê a frase inteira, do jeito que foi montada.
 
 let sentence = [];
 
@@ -218,6 +219,7 @@ function renderSentence() {
 }
 
 function addToSentence(card) {
+  speak(card.speak);
   sentence.push({ label: card.label, speak: card.speak, emoji: card.emoji });
   renderSentence();
 }
