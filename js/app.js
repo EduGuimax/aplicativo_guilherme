@@ -42,6 +42,7 @@ import {
   hideSpotlight,
 } from "./render.js";
 import { enableDragReorder } from "./dragsort.js";
+import { readAndCompressImage } from "./photo.js";
 
 let activeCategoryId = CATEGORIES[0].id;
 let activeActivityId = null;
@@ -220,7 +221,7 @@ function renderSentence() {
 
 function addToSentence(card) {
   speak(card.speak);
-  sentence.push({ label: card.label, speak: card.speak, emoji: card.emoji });
+  sentence.push({ label: card.label, speak: card.speak, emoji: card.emoji, photo: card.photo });
   renderSentence();
 }
 
@@ -298,7 +299,7 @@ function openActivity(activityId) {
 function handleActivityItemTap(activity, item) {
   if (item.custom) {
     speak(item.speak || item.label);
-    showSpotlight({ emoji: item.emoji || "⭐", title: item.label });
+    showSpotlight({ emoji: item.emoji || "⭐", photo: item.photo, title: item.label });
     return;
   }
 
@@ -355,26 +356,66 @@ function confirmDeleteActivityItem(activityId, item) {
 
 document.getElementById("spotlight").addEventListener("click", hideSpotlight);
 
+// ---------- Seleção de ícone: emoji ou foto ----------
+// Compartilhado pelos dois modais de "adicionar" (palavra/item e categoria/atividade).
+// prefix é "add" ou "cat", batendo com os ids no index.html.
+
+function setIconPreview(prefix, emoji, photo) {
+  const trigger = document.getElementById(prefix + "-emoji-trigger");
+  const emojiSpan = document.getElementById(prefix + "-emoji-preview");
+  const photoImg = document.getElementById(prefix + "-photo-preview");
+
+  if (photo) {
+    photoImg.src = photo;
+    trigger.classList.add("emoji-trigger--has-photo");
+  } else {
+    photoImg.src = "";
+    trigger.classList.remove("emoji-trigger--has-photo");
+    emojiSpan.textContent = emoji;
+  }
+}
+
+function wirePhotoPicker(prefix, onPhoto) {
+  document.getElementById(prefix + "-photo-trigger").addEventListener("click", () => {
+    document.getElementById(prefix + "-photo-input").click();
+  });
+
+  document.getElementById(prefix + "-photo-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const dataUrl = await readAndCompressImage(file);
+      onPhoto(dataUrl);
+    } catch (err) {
+      console.warn("Falha ao processar a foto:", err);
+    }
+  });
+}
+
 // ---------- Modal: adicionar palavra / item ----------
 // Reaproveitado tanto para cartões do Conversar quanto para itens de uma atividade.
 
 const modalAdd = document.getElementById("modal-add");
 let addTarget = null; // { type: "card", categoryId } | { type: "activityItem", activityId }
 let selectedWordEmoji = "⭐";
+let selectedWordPhoto = null;
 
 function openAddModal(categoryId) {
   addTarget = { type: "card", categoryId };
   selectedWordEmoji = "⭐";
+  selectedWordPhoto = null;
   document.getElementById("add-label").value = "";
-  document.getElementById("add-emoji-preview").textContent = selectedWordEmoji;
+  setIconPreview("add", selectedWordEmoji, null);
   modalAdd.classList.add("modal--visible");
 }
 
 function openAddItemModal(activityId) {
   addTarget = { type: "activityItem", activityId };
   selectedWordEmoji = "⭐";
+  selectedWordPhoto = null;
   document.getElementById("add-label").value = "";
-  document.getElementById("add-emoji-preview").textContent = selectedWordEmoji;
+  setIconPreview("add", selectedWordEmoji, null);
   modalAdd.classList.add("modal--visible");
 }
 
@@ -387,8 +428,14 @@ document.getElementById("add-cancel").addEventListener("click", closeAddModal);
 document.getElementById("add-emoji-trigger").addEventListener("click", () => {
   openEmojiPicker(activeCategoryId === "pessoas" ? "pessoas" : null, (emoji) => {
     selectedWordEmoji = emoji;
-    document.getElementById("add-emoji-preview").textContent = emoji;
+    selectedWordPhoto = null;
+    setIconPreview("add", selectedWordEmoji, null);
   });
+});
+
+wirePhotoPicker("add", (dataUrl) => {
+  selectedWordPhoto = dataUrl;
+  setIconPreview("add", selectedWordEmoji, selectedWordPhoto);
 });
 
 document.getElementById("add-save").addEventListener("click", () => {
@@ -399,11 +446,11 @@ document.getElementById("add-save").addEventListener("click", () => {
   }
 
   if (addTarget.type === "card") {
-    addCustomCard(addTarget.categoryId, { label, speak: label, emoji: selectedWordEmoji });
+    addCustomCard(addTarget.categoryId, { label, speak: label, emoji: selectedWordEmoji, photo: selectedWordPhoto });
     closeAddModal();
     renderConversar();
   } else {
-    addCustomActivityItem(addTarget.activityId, { label, speak: label, emoji: selectedWordEmoji });
+    addCustomActivityItem(addTarget.activityId, { label, speak: label, emoji: selectedWordEmoji, photo: selectedWordPhoto });
     closeAddModal();
     renderActivityScreen();
   }
@@ -415,24 +462,27 @@ document.getElementById("add-save").addEventListener("click", () => {
 const modalAddCategory = document.getElementById("modal-add-category");
 let catTarget = null; // { type: "category" } | { type: "activity", pinned }
 let selectedCategoryEmoji = "⭐";
+let selectedCategoryPhoto = null;
 
 function openAddCategoryModal() {
   catTarget = { type: "category" };
   selectedCategoryEmoji = "⭐";
+  selectedCategoryPhoto = null;
   document.getElementById("cat-modal-title").textContent = "Nova categoria";
   document.getElementById("cat-field-label").textContent = "Nome da categoria";
   document.getElementById("cat-label").value = "";
-  document.getElementById("cat-emoji-preview").textContent = selectedCategoryEmoji;
+  setIconPreview("cat", selectedCategoryEmoji, null);
   modalAddCategory.classList.add("modal--visible");
 }
 
 function openAddActivityModal(pinned) {
   catTarget = { type: "activity", pinned };
   selectedCategoryEmoji = "⭐";
+  selectedCategoryPhoto = null;
   document.getElementById("cat-modal-title").textContent = "Nova atividade";
   document.getElementById("cat-field-label").textContent = "Nome da atividade";
   document.getElementById("cat-label").value = "";
-  document.getElementById("cat-emoji-preview").textContent = selectedCategoryEmoji;
+  setIconPreview("cat", selectedCategoryEmoji, null);
   modalAddCategory.classList.add("modal--visible");
 }
 
@@ -445,8 +495,14 @@ document.getElementById("cat-cancel").addEventListener("click", closeAddCategory
 document.getElementById("cat-emoji-trigger").addEventListener("click", () => {
   openEmojiPicker(null, (emoji) => {
     selectedCategoryEmoji = emoji;
-    document.getElementById("cat-emoji-preview").textContent = emoji;
+    selectedCategoryPhoto = null;
+    setIconPreview("cat", selectedCategoryEmoji, null);
   });
+});
+
+wirePhotoPicker("cat", (dataUrl) => {
+  selectedCategoryPhoto = dataUrl;
+  setIconPreview("cat", selectedCategoryEmoji, selectedCategoryPhoto);
 });
 
 document.getElementById("cat-save").addEventListener("click", () => {
@@ -457,12 +513,12 @@ document.getElementById("cat-save").addEventListener("click", () => {
   }
 
   if (catTarget.type === "category") {
-    const category = addCustomCategory({ label, emoji: selectedCategoryEmoji });
+    const category = addCustomCategory({ label, emoji: selectedCategoryEmoji, photo: selectedCategoryPhoto });
     activeCategoryId = category.id;
     closeAddCategoryModal();
     renderConversar();
   } else {
-    const activity = addCustomActivity({ label, emoji: selectedCategoryEmoji, pinned: catTarget.pinned });
+    const activity = addCustomActivity({ label, emoji: selectedCategoryEmoji, photo: selectedCategoryPhoto, pinned: catTarget.pinned });
     closeAddCategoryModal();
     renderHome();
     renderAprender();

@@ -22,6 +22,18 @@ function spanEl(className, text) {
   return span;
 }
 
+// Cria o ícone de um item: mostra a foto dele se tiver uma, senão o emoji.
+function iconEl(className, item, fallbackEmoji) {
+  if (item.photo) {
+    const img = document.createElement("img");
+    img.className = className;
+    img.src = item.photo;
+    img.alt = "";
+    return img;
+  }
+  return spanEl(className, item.emoji || fallbackEmoji || "⭐");
+}
+
 function addDeleteBadge(hostEl, onDelete) {
   hostEl.classList.add("has-delete");
   const badge = document.createElement("span");
@@ -44,7 +56,7 @@ export function renderCategoryTabs(container, categories, activeId, onSelect, op
     btn.className = "tab" + (cat.id === activeId ? " tab--active" : "");
     btn.dataset.id = cat.id;
     btn.style.setProperty("--tab-color", cat.color);
-    btn.appendChild(spanEl("tab__emoji", cat.emoji));
+    btn.appendChild(iconEl("tab__emoji", cat));
     btn.appendChild(spanEl("tab__label", cat.label));
     btn.addEventListener("click", () => onSelect(cat.id));
 
@@ -74,7 +86,7 @@ export function renderCardGrid(container, cards, onTap, options = {}) {
     const btn = document.createElement("button");
     btn.className = "card";
     btn.dataset.id = card.id;
-    btn.appendChild(spanEl("card__emoji", card.emoji));
+    btn.appendChild(iconEl("card__emoji", card));
     btn.appendChild(spanEl("card__label", card.label));
     btn.addEventListener("click", () => {
       pulse(btn);
@@ -115,7 +127,7 @@ function createActivityItemButton(item, display) {
     btn.appendChild(spanEl("letter-tile__letter", item.label));
   } else {
     btn.className = "card";
-    btn.appendChild(spanEl("card__emoji", item.emoji || "⭐"));
+    btn.appendChild(iconEl("card__emoji", item, "⭐"));
     btn.appendChild(spanEl("card__label", item.label));
   }
   return btn;
@@ -161,7 +173,7 @@ export function renderActivityTiles(container, activities, onTap, options = {}) 
     if (!activity.cssClass) {
       btn.style.background = `linear-gradient(160deg, ${activity.color}, ${activity.color})`;
     }
-    btn.appendChild(spanEl("learn-card__emoji", activity.emoji));
+    btn.appendChild(iconEl("learn-card__emoji", activity));
     btn.appendChild(spanEl(null, activity.label));
     btn.addEventListener("click", () => onTap(activity.id));
 
@@ -191,7 +203,7 @@ export function renderHomeExtraTiles(container, activities, onTap, options = {})
     const btn = document.createElement("button");
     btn.className = "home-btn home-btn--extra";
     btn.style.background = `linear-gradient(160deg, ${activity.color}, ${activity.color})`;
-    btn.appendChild(spanEl("home-btn__emoji", activity.emoji));
+    btn.appendChild(iconEl("home-btn__emoji", activity));
     btn.appendChild(spanEl(null, activity.label));
     btn.addEventListener("click", () => onTap(activity.id));
 
@@ -214,14 +226,25 @@ export function renderHomeExtraTiles(container, activities, onTap, options = {})
 
 // Overlay em tela cheia usado no "Aprender" para reforço visual forte:
 // mostra emoji + texto grande no centro, some ao tocar em qualquer lugar.
-export function showSpotlight({ emoji, title, subtitle }) {
+export function showSpotlight({ emoji, photo, title, subtitle }) {
   const overlay = document.getElementById("spotlight");
   const emojiEl = document.getElementById("spotlight-emoji");
+  const photoEl = document.getElementById("spotlight-photo");
   const titleEl = document.getElementById("spotlight-title");
   const subtitleEl = document.getElementById("spotlight-subtitle");
 
-  emojiEl.textContent = emoji || "";
-  emojiEl.style.color = "";
+  if (photo) {
+    photoEl.src = photo;
+    photoEl.style.display = "block";
+    emojiEl.style.display = "none";
+  } else {
+    photoEl.style.display = "none";
+    photoEl.src = "";
+    emojiEl.style.display = "";
+    emojiEl.textContent = emoji || "";
+    emojiEl.style.color = "";
+  }
+
   titleEl.textContent = title || "";
   subtitleEl.textContent = subtitle || "";
   subtitleEl.style.display = subtitle ? "block" : "none";
@@ -268,7 +291,7 @@ export function renderSentenceWords(container, words, onRemove) {
   words.forEach((word, index) => {
     const chip = document.createElement("button");
     chip.className = "word-chip";
-    chip.appendChild(spanEl("word-chip__emoji", word.emoji || ""));
+    chip.appendChild(iconEl("word-chip__emoji", word, ""));
     chip.appendChild(spanEl("word-chip__label", word.label));
     chip.addEventListener("click", () => onRemove(index));
     container.appendChild(chip);

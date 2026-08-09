@@ -1,4 +1,4 @@
-const CACHE_NAME = "vamos-conversar-v3";
+const CACHE_NAME = "vamos-conversar-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const APP_SHELL = [
   "./js/storage.js",
   "./js/render.js",
   "./js/dragsort.js",
+  "./js/photo.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
 ];

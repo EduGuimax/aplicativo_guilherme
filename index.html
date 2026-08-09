@@ -67,6 +67,7 @@
 <div id="spotlight" class="spotlight">
   <div class="spotlight__card">
     <div id="spotlight-emoji" class="spotlight__emoji"></div>
+    <img id="spotlight-photo" class="spotlight__photo" alt="" />
     <div id="spotlight-title" class="spotlight__title"></div>
     <div id="spotlight-subtitle" class="spotlight__subtitle"></div>
   </div>
@@ -82,9 +83,14 @@
     </label>
     <div class="modal__field">
       Ícone
-      <button id="add-emoji-trigger" class="emoji-trigger" type="button">
-        <span id="add-emoji-preview">⭐</span>
-      </button>
+      <div class="icon-picker-row">
+        <button id="add-emoji-trigger" class="emoji-trigger" type="button" title="Escolher emoji">
+          <span id="add-emoji-preview">⭐</span>
+          <img id="add-photo-preview" class="emoji-trigger__photo" alt="" />
+        </button>
+        <button id="add-photo-trigger" class="photo-trigger" type="button" title="Usar uma foto">📷<br />Foto</button>
+        <input id="add-photo-input" type="file" accept="image/*" class="visually-hidden" />
+      </div>
     </div>
     <div class="modal__actions">
       <button id="add-cancel" class="btn btn--ghost">Cancelar</button>
@@ -103,9 +109,14 @@
     </label>
     <div class="modal__field">
       Ícone
-      <button id="cat-emoji-trigger" class="emoji-trigger" type="button">
-        <span id="cat-emoji-preview">⭐</span>
-      </button>
+      <div class="icon-picker-row">
+        <button id="cat-emoji-trigger" class="emoji-trigger" type="button" title="Escolher emoji">
+          <span id="cat-emoji-preview">⭐</span>
+          <img id="cat-photo-preview" class="emoji-trigger__photo" alt="" />
+        </button>
+        <button id="cat-photo-trigger" class="photo-trigger" type="button" title="Usar uma foto">📷<br />Foto</button>
+        <input id="cat-photo-input" type="file" accept="image/*" class="visually-hidden" />
+      </div>
     </div>
     <div class="modal__actions">
       <button id="cat-cancel" class="btn btn--ghost">Cancelar</button>

@@ -51,7 +51,7 @@ export function getCustomCards(categoryId) {
   return all[categoryId] || [];
 }
 
-export function addCustomCard(categoryId, { label, speak, emoji }) {
+export function addCustomCard(categoryId, { label, speak, emoji, photo }) {
   const all = getAllCustomCards();
   const list = all[categoryId] || [];
   const card = {
@@ -60,6 +60,7 @@ export function addCustomCard(categoryId, { label, speak, emoji }) {
     speak: (speak || label).trim(),
     emoji: emoji || "⭐",
   };
+  if (photo) card.photo = photo;
   all[categoryId] = [...list, card];
   writeJSON(CARDS_KEY, all);
   return card;
@@ -78,7 +79,7 @@ export function getCustomCategories() {
   return readJSON(CATEGORIES_KEY, []);
 }
 
-export function addCustomCategory({ label, emoji }) {
+export function addCustomCategory({ label, emoji, photo }) {
   const list = getCustomCategories();
   const totalExisting = list.length;
   const category = {
@@ -88,6 +89,7 @@ export function addCustomCategory({ label, emoji }) {
     color: CATEGORY_COLORS[totalExisting % CATEGORY_COLORS.length],
     cards: [],
   };
+  if (photo) category.photo = photo;
   writeJSON(CATEGORIES_KEY, [...list, category]);
   return category;
 }
@@ -135,7 +137,7 @@ export function getCustomActivities() {
   return readJSON(ACTIVITIES_KEY, []);
 }
 
-export function addCustomActivity({ label, emoji, pinned }) {
+export function addCustomActivity({ label, emoji, photo, pinned }) {
   const list = getCustomActivities();
   const activity = {
     id: "act-custom-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -144,6 +146,7 @@ export function addCustomActivity({ label, emoji, pinned }) {
     color: CATEGORY_COLORS[list.length % CATEGORY_COLORS.length],
     pinned: pinned === "home" ? "home" : "aprender",
   };
+  if (photo) activity.photo = photo;
   writeJSON(ACTIVITIES_KEY, [...list, activity]);
   return activity;
 }
@@ -161,7 +164,7 @@ export function getCustomActivityItems(activityId) {
   return all[activityId] || [];
 }
 
-export function addCustomActivityItem(activityId, { label, speak, emoji }) {
+export function addCustomActivityItem(activityId, { label, speak, emoji, photo }) {
   const all = readJSON(ACTIVITY_ITEMS_KEY, {});
   const list = all[activityId] || [];
   const item = {
@@ -170,6 +173,7 @@ export function addCustomActivityItem(activityId, { label, speak, emoji }) {
     speak: (speak || label).trim(),
     emoji: emoji || "⭐",
   };
+  if (photo) item.photo = photo;
   all[activityId] = [...list, item];
   writeJSON(ACTIVITY_ITEMS_KEY, all);
   return item;
