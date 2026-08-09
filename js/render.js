@@ -42,6 +42,7 @@ export function renderCategoryTabs(container, categories, activeId, onSelect, op
   categories.forEach((cat) => {
     const btn = document.createElement("button");
     btn.className = "tab" + (cat.id === activeId ? " tab--active" : "");
+    btn.dataset.id = cat.id;
     btn.style.setProperty("--tab-color", cat.color);
     btn.appendChild(spanEl("tab__emoji", cat.emoji));
     btn.appendChild(spanEl("tab__label", cat.label));
@@ -72,6 +73,7 @@ export function renderCardGrid(container, cards, onTap, options = {}) {
   cards.forEach((card) => {
     const btn = document.createElement("button");
     btn.className = "card";
+    btn.dataset.id = card.id;
     btn.appendChild(spanEl("card__emoji", card.emoji));
     btn.appendChild(spanEl("card__label", card.label));
     btn.addEventListener("click", () => {
@@ -254,5 +256,21 @@ export function renderEmojiPicker(container, emojis, onPick) {
     btn.textContent = emoji;
     btn.addEventListener("click", () => onPick(emoji));
     container.appendChild(btn);
+  });
+}
+
+// ---------- Barra de frase (Conversar) ----------
+
+// words: lista de {label, speak, emoji} na ordem em que foram tocadas.
+// onRemove(index): chamado ao tocar numa palavra já colocada na frase, para retirá-la.
+export function renderSentenceWords(container, words, onRemove) {
+  clear(container);
+  words.forEach((word, index) => {
+    const chip = document.createElement("button");
+    chip.className = "word-chip";
+    chip.appendChild(spanEl("word-chip__emoji", word.emoji || ""));
+    chip.appendChild(spanEl("word-chip__label", word.label));
+    chip.addEventListener("click", () => onRemove(index));
+    container.appendChild(chip);
   });
 }

@@ -9,6 +9,8 @@ const ACTIVITIES_KEY = "vamosConversar.customActivities";
 const ACTIVITY_ITEMS_KEY = "vamosConversar.customActivityItems";
 const HIDDEN_ACTIVITIES_KEY = "vamosConversar.hiddenActivities";
 const HIDDEN_ACTIVITY_ITEMS_KEY = "vamosConversar.hiddenActivityItems";
+const CATEGORY_ORDER_KEY = "vamosConversar.categoryOrder";
+const CARD_ORDER_KEY = "vamosConversar.cardOrder";
 const SETTINGS_KEY = "vamosConversar.settings";
 
 const DEFAULT_SETTINGS = { rate: 0.9, pitch: 1.0 };
@@ -211,6 +213,30 @@ export function restoreAllHidden() {
   writeJSON(HIDDEN_CATEGORIES_KEY, []);
   writeJSON(HIDDEN_ACTIVITIES_KEY, []);
   writeJSON(HIDDEN_ACTIVITY_ITEMS_KEY, {});
+}
+
+// ---------- Ordem escolhida pela família (arrastar para reordenar) ----------
+
+// Ordem das abas de categoria no Conversar (lista de ids). Itens novos que ainda
+// não foram reordenados aparecem no fim, na ordem natural.
+export function getCategoryOrder() {
+  return readJSON(CATEGORY_ORDER_KEY, []);
+}
+
+export function setCategoryOrder(orderedIds) {
+  writeJSON(CATEGORY_ORDER_KEY, orderedIds);
+}
+
+// Ordem dos cartões dentro de uma categoria específica.
+export function getCardOrder(categoryId) {
+  const all = readJSON(CARD_ORDER_KEY, {});
+  return all[categoryId] || [];
+}
+
+export function setCardOrder(categoryId, orderedIds) {
+  const all = readJSON(CARD_ORDER_KEY, {});
+  all[categoryId] = orderedIds;
+  writeJSON(CARD_ORDER_KEY, all);
 }
 
 // ---------- Preferências de voz ----------

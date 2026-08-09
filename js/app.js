@@ -21,6 +21,10 @@ import {
   hideDefaultActivity,
   getHiddenActivityItemIds,
   hideDefaultActivityItem,
+  getCategoryOrder,
+  setCategoryOrder,
+  getCardOrder,
+  setCardOrder,
   restoreAllHidden,
   getSettings,
   setSettings,
@@ -33,14 +37,29 @@ import {
   renderHomeExtraTiles,
   renderEmojiGroupTabs,
   renderEmojiPicker,
+  renderSentenceWords,
   showSpotlight,
   hideSpotlight,
 } from "./render.js";
+import { enableDragReorder } from "./dragsort.js";
 
 let activeCategoryId = CATEGORIES[0].id;
 let activeActivityId = null;
 let editMode = false;
 let currentScreen = "home";
+
+// Aplica uma ordem customizada (arrastada pela família) a uma lista de itens.
+// Itens que ainda não foram reordenados (não estão em orderIds) vão para o fim,
+// mantendo a ordem natural entre eles.
+function applyOrder(items, orderIds) {
+  if (!orderIds || orderIds.length === 0) return items;
+  const index = new Map(orderIds.map((id, i) => [id, i]));
+  return [...items].sort((a, b) => {
+    const ai = index.has(a.id) ? index.get(a.id) : Infinity;
+    const bi = index.has(b.id) ? index.get(b.id) : Infinity;
+    return ai - bi;
+  });
+}
 
 // ---------- Navegação entre telas ----------
 
@@ -106,7 +125,8 @@ function renderHome() {
 function allCategories() {
   const hiddenIds = getHiddenCategoryIds();
   const defaults = CATEGORIES.filter((c) => !hiddenIds.includes(c.id));
-  return [...defaults, ...getCustomCategories()];
+  const combined = [...defaults, ...getCustomCategories()];
+  return applyOrder(combined, getCategoryOrder());
 }
 
 function cardsForCategory(categoryId) {
@@ -114,7 +134,7 @@ function cardsForCategory(categoryId) {
   const hiddenIds = getHiddenCardIds(categoryId);
   const base = defaultCat ? defaultCat.cards.filter((c) => !hiddenIds.includes(c.id)) : [];
   const custom = getCustomCards(categoryId).map((c) => ({ ...c, custom: true }));
-  return [...base, ...custom];
+  return applyOrder([...base, ...custom], getCardOrder(categoryId));
 }
 
 function renderConversar() {
@@ -138,7 +158,7 @@ function renderConversar() {
   }
 
   renderCardGrid(document.getElementById("grid-conversar"), cardsForCategory(activeCategoryId), (card) => {
-    speak(card.speak);
+    addToSentence(card);
   }, {
     onAdd: () => openAddModal(activeCategoryId),
     editMode,
@@ -183,6 +203,34 @@ function confirmDeleteCard(categoryId, card) {
     },
   });
 }
+
+// ---------- Barra de frase (Conversar) ----------
+// Cada toque numa palavra soma ela na frase. Só fala quando toca em "Falar".
+
+let sentence = [];
+
+function renderSentence() {
+  renderSentenceWords(document.getElementById("sentence-words"), sentence, (index) => {
+    sentence.splice(index, 1);
+    renderSentence();
+  });
+  document.getElementById("sentence-bar").classList.toggle("sentence-bar--empty", sentence.length === 0);
+}
+
+function addToSentence(card) {
+  sentence.push({ label: card.label, speak: card.speak, emoji: card.emoji });
+  renderSentence();
+}
+
+document.getElementById("sentence-clear").addEventListener("click", () => {
+  sentence = [];
+  renderSentence();
+});
+
+document.getElementById("sentence-speak").addEventListener("click", () => {
+  if (sentence.length === 0) return;
+  speak(sentence.map((w) => w.speak).join(" "));
+});
 
 // ---------- Aprender (submenu de atividades) ----------
 
@@ -506,9 +554,21 @@ document.getElementById("restore-hidden").addEventListener("click", () => {
   refreshCurrentScreen();
 });
 
+// ---------- Arrastar para reordenar (abas e cartões do Conversar) ----------
+// Só funciona com o modo de edição (✏️) ligado, pra não interferir no uso normal.
+
+enableDragReorder(document.getElementById("tabs"), () => editMode, (orderedIds) => {
+  setCategoryOrder(orderedIds);
+});
+
+enableDragReorder(document.getElementById("grid-conversar"), () => editMode, (orderedIds) => {
+  setCardOrder(activeCategoryId, orderedIds);
+});
+
 // ---------- Inicialização ----------
 
 renderHome();
+renderSentence();
 
 // ---------- Service worker (funcionamento offline) ----------
 
